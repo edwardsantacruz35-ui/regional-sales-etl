@@ -1,0 +1,456 @@
+/**
+ * 🚌 SISTEMA VENTAS WAWA 2026 - MAESTRO V120 (EMAIL PERFECTO)
+ * ===========================================================
+ * * MEJORAS EMAIL:
+ * - Celdas más delgadas (padding reducido).
+ * - Separación de 50px (2 filas visuales) entre reportes.
+ * - Anchura al 100% alineada.
+ * * CORE:
+ * - Top 5 (Fila 77) y Tendencia (Fila 88) intactos.
+ */
+
+// --- CONFIGURACIÓN ---
+const CONFIG = {
+  EMAIL_DESTINO: "AUTO", 
+  ASUNTO_EMAIL: "🚀 VENTAS WAWA 2026 - Reporte Ejecutivo Actualizado"
+};
+
+const ESTILO = { 
+  COLOR_HEADER: "#240046", 
+  COLOR_SUBHEADER: "#E0E0E0",
+  BORDE_COLOR: "#D9D9D9"
+};
+
+const REGLAS = {
+  PRODUCTOS: {
+    "411.110.01": "OPEN NETW", "TICKETS": "OPEN NETW", 
+    "411.110.02": "OPEN NETW", "INFINITY 30": "OPEN NETW",
+    "411.110.03": "OPEN NETW", "INFINITY 15": "OPEN NETW",
+    "411.110.05": "OPEN NETW", "EXTRAURBANOS": "OPEN NETW",
+    "411.110.06": "CLOSED NETW", "SERVICIOS EXCLUSIVOS": "CLOSED NETW", "CLOSED NETWORK": "CLOSED NETW",
+    "412.110.01": "AMPLIFY", "PUBLICIDAD": "AMPLIFY",
+    "412.110.02": "LIVE", "RECREATIVOS": "LIVE",
+    "412.110.04": "RENTAL", "PARTICULARES": "RENTAL", "SERVICIOS PARTICULARES": "RENTAL",
+    "411.110.07": "LEASING",
+    "TRASLADO PARTICULAR": "RENTAL", "RED A DEMANDA": "RENTAL",
+    "RED EXCLUSIVA": "CLOSED NETW", "OPEN NETWORK": "OPEN NETW", 
+    "TRASLADO CORPORATIVO": "CLOSED NETW"
+  },
+  CLIENTES_PRODUCTO: {
+    "CORPORACION ANDINA DE FOMENTO": "CLOSED NETW", "CAF": "CLOSED NETW",
+    "NESTLE": "CLOSED NETW", "VECONINTER": "CLOSED NETW",
+    "UNICASA": "CLOSED NETW", "PWC": "CLOSED NETW", "PRICEWATERHOUSE": "CLOSED NETW"
+  },
+  LEGAL_SUFFIXES: ["C.A", "S.A", "SAS", "LTDA", "INC", "CORP", "LLC", "S.C", "S.R.L", "E.I.R.L", "P.H", "A.C", "CA", "SA"],
+  B2B_KEYWORDS: ["AGENCIA", "GRUPO", "SOCIEDAD", "ASOCIACION", "FUNDACION", "COOPERATIVA", "CONSORCIO", "UNION", "MANCOMUNIDAD", "FEDERACION", "CAMARA", "SINDICATO", "ORGANIZACION", "CONSEJO", "COMITE", "ALCALDIA", "GOBERNACION", "MINISTERIO", "INSTITUTO", "EMBAJADA", "CONSULADO", "GOBIERNO", "COLEGIO", "UNIVERSIDAD", "ESCUELA", "LICEO", "ACADEMIA", "HOSPITAL", "CLINICA", "CENTRO", "LABORATORIO", "FARMACIA", "DROGUERIA", "IPS", "EPS", "INVERSIONES", "DISTRIBUIDORA", "COMERCIALIZADORA", "COMERCIAL", "SUMINISTROS", "PROVEEDURIA", "SUPERMERCADO", "ABASTO", "BODEGA", "MARKET", "MERCADO", "LICORERIA", "BODEGON", "PANADERIA", "PASTELERIA", "CARNICERIA", "FRUTERIA", "CHARCUTERIA", "RESTAURANTE", "CAFE", "PIZZERIA", "SERVICIOS", "CONSULTORA", "CONSULTORES", "ASESORES", "GESTORIA", "ESCRITORIO", "BUFETE", "INGENIERIA", "ARQUITECTURA", "CONSTRUCTORA", "CONSTRUCCIONES", "PROYECTOS", "DESARROLLOS", "TRANSPORTE", "LOGISTICA", "ENCOMIENDAS", "VIAJES", "TURISMO", "HOTEL", "POSADA", "TECNOLOGIA", "SISTEMAS", "COMPUTACION", "TELECOMUNICACIONES", "REDES", "SOFTWARE", "SOLUCIONES", "SEGURIDAD", "VIGILANCIA", "MANTENIMIENTO", "LIMPIEZA", "LAVANDERIA", "TINTORERIA", "INDUSTRIA", "FABRICA", "MANUFACTURA", "TEXTIL", "CONFECCIONES", "CALZADO", "MODA", "BOUTIQUE", "AUTOMOTRIZ", "REPUESTOS", "TALLER", "MECANICA", "FRENOS", "CAUCHERA", "MULTISERVICIOS", "FERRETERIA", "MATERIALES", "ELECTRICA", "ELECTRONICA", "REFRIGERACION", "AIRES", "PUBLICIDAD", "MERCADEO", "MARKETING", "PRODUCCIONES", "EVENTOS", "FESTEJOS", "DECORACIONES", "INMOBILIARIA", "CONDOMINIO", "RESIDENCIAS", "EDIFICIO", "TORRE", "PH", "URBANIZACION", "TMS", "ASOCIADOS", "FIRMA", "PRICEWATERHOUSECOOPERS", "PWC", "BANCO", "SEGUROS", "FINANCIERA", "ADMINISTRADORA", "ZONA FRANCA", "USUARIO OPERADOR", "SUCURSAL"],
+  // --- LISTA VIP FILTRADA (SOLO GRANDES MARCAS PARA DEMOSTRACIÓN) ---
+  CLIENTES_VIP_B2B: ["COCA-COLA", "FEMSA", "BANESCO", "NESTLE", "PEPSI", "HBO", "ALIMENTOS POLAR", "PWC", "CAF", "VENEZOLANA DE TELEVISION", "VTV", "YUMMY", "TECNOLOGIA", "BANPLUS", "FARMACIA"],
+  MESES: ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"]
+};
+
+const HEADERS_VE = ["Nombre del contacto a mostrar en la factura", "Factura", "Fecha de Factura", "Vendedor", "Equipo de ventas", "Total firmado", "Importe adeudado firmado", "Estado de pago", "% Cobro Pendiente", "Total en $", "Cuenta Contable Asociado", "Mes", "Pais", "B2B o B2C", "Recurrencia", "Ciudad", "Producto"];
+const HEADERS_GU = ["Número", "Nombre del socio a mostrar en la factura.", "Fecha de Factura/Recibo", "Comercial", "Equipo de ventas", "Importe libre de impuestos firmado", "Impuestos firmados", "Total firmado", "Importe adeudado firmado", "Estado", "Estado de pago", "Referencia", "% Cobro Pendiente", "Tasa", "Total en $", "Cuenta Contable Asociado", "Mes", "Pais", "B2B o B2C", "Producto", "Sub-Producto", "Recurrencia"];
+const HEADERS_CO = ["Nombre del contacto a mostrar en la factura", "Factura", "Fecha de Factura", "Vendedor", "Equipo de ventas", "Total firmado", "Importe adeudado firmado", "Estado de pago", "% Cobro Pendiente", "Total en $", "Cuenta Contable Asociado", "Mes", "Pais", "B2B o B2C", "Recurrencia", "Ciudad", "Producto", "Sub-Producto", "TRM"];
+const HEADERS_ERR = ["Fecha Reporte", "País", "Factura", "Cliente", "Monto", "Tipo de Alerta", "Detalle"];
+
+function onOpen() {
+  SpreadsheetApp.getUi().createMenu('🚌 SISTEMA VENTAS')
+    .addItem('🚀 EJECUTAR REPORTE', 'ejecutarReconstruccion')
+    .addToUi();
+}
+
+function ejecutarReconstruccion() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const ui = SpreadsheetApp.getUi();
+  
+  try {
+    const hojasRequeridas = ["Input_VE", "Input_CO", "Input_GU", "Tasas"];
+    let faltantes = hojasRequeridas.filter(h => !ss.getSheetByName(h));
+    if (faltantes.length > 0) {
+       ui.alert("⚠️ ALERTA: Faltan hojas: " + faltantes.join(", "));
+       return; 
+    }
+
+    configurarEstructura(ss);
+    const configClientes = obtenerConfigClientes(ss);
+    const tasasPorPais = obtenerTasasPorPais(ss); 
+
+    // LIMPIEZA
+    limpiarHoja(ss, "Data VE");
+    limpiarHoja(ss, "Data GU");
+    limpiarHoja(ss, "Data CO");
+    limpiarHoja(ss, "B2C RED VE");
+    limpiarHoja(ss, "ERRORES"); 
+
+    let erroresGlobal = [];
+
+    // PROCESAMIENTO
+    let repVE = reconstruirVenezuela(ss, configClientes, erroresGlobal);
+    let repGU = reconstruirGuatemala(ss, configClientes, tasasPorPais.GU, erroresGlobal);
+    let repCO = reconstruirColombia(ss, configClientes, tasasPorPais.CO, erroresGlobal);
+
+    // REPORTE ERRORES
+    if (erroresGlobal.length > 0) {
+        pegarCompacto(ss.getSheetByName("ERRORES"), erroresGlobal);
+        aplicarEstiloVisual(ss.getSheetByName("ERRORES"));
+    }
+
+    // ESTILO DATA
+    aplicarEstiloVisual(ss.getSheetByName("Data VE"));
+    aplicarEstiloVisual(ss.getSheetByName("Data GU"));
+    aplicarEstiloVisual(ss.getSheetByName("Data CO"));
+    aplicarEstiloCabeceraSimple(ss.getSheetByName("B2C RED VE"));
+
+    // 🏆 GENERAR REPORTES EN RESUMEN
+    generarTablasTop5(ss);
+    generarTendenciaMensual(ss); 
+
+    SpreadsheetApp.flush(); 
+
+    // 📧 ENVÍO CORREO PRO
+    enviarReporteCorreo(ss, repVE.summary, repGU.summary, repCO.summary, erroresGlobal.length);
+
+    // 🌐 DASHBOARD POP-UP
+    mostrarReporteResumenHTML(repVE.summary, repGU.summary, repCO.summary, erroresGlobal.length);
+  
+  } catch (e) {
+    ui.alert("🚨 ERROR CRÍTICO:\n" + e.message);
+  }
+}
+
+// ==========================================
+// 🏆 TOP 5 (FILA 77)
+// ==========================================
+function generarTablasTop5(ss) {
+  const sheet = ss.getSheetByName("Resumen");
+  if (!sheet) return;
+  const startRow = 77; 
+  sheet.getRange(startRow, 1, 20, 15).clearContent().clearFormat();
+  
+  sheet.getRange("A" + startRow).setValue("🏆 CLIENTES TOP 5").setFontWeight("bold").setFontColor("#666");
+  const rowHeaders = startRow + 2;
+  const rowQuery = startRow + 3;
+
+  // VE
+  sheet.getRange(rowHeaders, 1).setValue("VENEZUELA").setBackground(ESTILO.COLOR_HEADER).setFontColor("white").setFontWeight("bold");
+  sheet.getRange(rowQuery, 1).setFormula(`=QUERY('Data VE'!A:Z; "SELECT A, SUM(J) WHERE UPPER(L) = '"&UPPER(A1)&"' GROUP BY A ORDER BY SUM(J) DESC LIMIT 5 LABEL A 'CLIENTE', SUM(J) 'VENTA USD'"; 1)`);
+  sheet.getRange(rowQuery, 1, 1, 2).setBackground(ESTILO.COLOR_SUBHEADER).setFontWeight("bold").setBorder(true, true, true, true, true, true, ESTILO.BORDE_COLOR, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowQuery + 1, 2, 5, 1).setNumberFormat("$#,##0.00");
+
+  // CO
+  sheet.getRange(rowHeaders, 4).setValue("COLOMBIA").setBackground(ESTILO.COLOR_HEADER).setFontColor("white").setFontWeight("bold");
+  sheet.getRange(rowQuery, 4).setFormula(`=QUERY('Data CO'!A:Z; "SELECT A, SUM(J) WHERE UPPER(L) = '"&UPPER(A1)&"' GROUP BY A ORDER BY SUM(J) DESC LIMIT 5 LABEL A 'CLIENTE', SUM(J) 'VENTA USD'"; 1)`);
+  sheet.getRange(rowQuery, 4, 1, 2).setBackground(ESTILO.COLOR_SUBHEADER).setFontWeight("bold").setBorder(true, true, true, true, true, true, ESTILO.BORDE_COLOR, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowQuery + 1, 5, 5, 1).setNumberFormat("$#,##0.00");
+
+  // GU
+  sheet.getRange(rowHeaders, 7).setValue("GUATEMALA").setBackground(ESTILO.COLOR_HEADER).setFontColor("white").setFontWeight("bold");
+  sheet.getRange(rowQuery, 7).setFormula(`=QUERY('Data GU'!A:Z; "SELECT B, SUM(O) WHERE UPPER(Q) = '"&UPPER(A1)&"' GROUP BY B ORDER BY SUM(O) DESC LIMIT 5 LABEL B 'CLIENTE', SUM(O) 'VENTA USD'"; 1)`);
+  sheet.getRange(rowQuery, 7, 1, 2).setBackground(ESTILO.COLOR_SUBHEADER).setFontWeight("bold").setBorder(true, true, true, true, true, true, ESTILO.BORDE_COLOR, SpreadsheetApp.BorderStyle.SOLID);
+  sheet.getRange(rowQuery + 1, 8, 5, 1).setNumberFormat("$#,##0.00");
+}
+
+// ==========================================
+// 📈 EVOLUCIÓN MENSUAL (FILA 88)
+// ==========================================
+function generarTendenciaMensual(ss) {
+  const sheet = ss.getSheetByName("Resumen");
+  if (!sheet) return;
+  const startRow = 88;
+  
+  sheet.getRange(startRow, 1, 18, 7).clearContent().clearFormat();
+  sheet.getRange("A" + startRow).setValue("📈 EVOLUCIÓN MENSUAL DE VENTAS (USD)").setFontWeight("bold").setFontColor("#666");
+
+  const headers = ["MES", "VENEZUELA", "COLOMBIA", "GUATEMALA", "TOTAL", "TENDENCIA"];
+  const headerRange = sheet.getRange(startRow + 2, 1, 1, 6);
+  headerRange.setValues([headers]);
+  headerRange.setBackground(ESTILO.COLOR_HEADER).setFontColor("white").setFontWeight("bold").setHorizontalAlignment("center");
+
+  const meses = REGLAS.MESES;
+  let filaActual = startRow + 3;
+  const rangeTotal = `$E$${filaActual}:$E$${filaActual + 11}`;
+
+  meses.forEach((mes) => {
+    sheet.getRange(filaActual, 1).setValue(mes).setFontWeight("bold");
+    sheet.getRange(filaActual, 2).setFormula(`=SUMIF('Data VE'!L:L; "${mes}"; 'Data VE'!J:J)`);
+    sheet.getRange(filaActual, 3).setFormula(`=SUMIF('Data CO'!L:L; "${mes}"; 'Data CO'!J:J)`);
+    sheet.getRange(filaActual, 4).setFormula(`=SUMIF('Data GU'!Q:Q; "${mes}"; 'Data GU'!O:O)`);
+    sheet.getRange(filaActual, 5).setFormula(`=SUM(B${filaActual}:D${filaActual})`);
+    const formulaSpark = `=SPARKLINE(B${filaActual}:D${filaActual}; {"charttype"\\"bar";"max"\\MAX(${rangeTotal});"color1"\\"${ESTILO.COLOR_HEADER}";"color2"\\"#7B1FA2";"color3"\\"#9575CD"})`;
+    sheet.getRange(filaActual, 6).setFormula(formulaSpark);
+    filaActual++;
+  });
+
+  const dataRange = sheet.getRange(startRow + 3, 2, 12, 4);
+  dataRange.setNumberFormat("$#,##0.00");
+  dataRange.setBorder(true, true, true, true, true, true, ESTILO.BORDE_COLOR, SpreadsheetApp.BorderStyle.SOLID);
+  
+  const totalRow = filaActual;
+  sheet.getRange(totalRow, 1).setValue("TOTAL ANUAL").setBackground(ESTILO.COLOR_SUBHEADER).setFontWeight("bold");
+  sheet.getRange(totalRow, 2).setFormula(`=SUM(B${startRow+3}:B${totalRow-1})`);
+  sheet.getRange(totalRow, 3).setFormula(`=SUM(C${startRow+3}:C${totalRow-1})`);
+  sheet.getRange(totalRow, 4).setFormula(`=SUM(D${startRow+3}:D${totalRow-1})`);
+  sheet.getRange(totalRow, 5).setFormula(`=SUM(E${startRow+3}:E${totalRow-1})`);
+  sheet.getRange(totalRow, 2, 1, 4).setFontWeight("bold").setNumberFormat("$#,##0.00").setBackground(ESTILO.COLOR_SUBHEADER);
+}
+
+// ==========================================
+// 📧 EMAILING (DISEÑO SLIM & SPACED)
+// ==========================================
+function enviarReporteCorreo(ss, ve, gu, co, numErrores) {
+  // 1. Resumen General
+  const productos = ["OPEN NETW", "CLOSED NETW", "RENTAL", "LIVE", "AMPLIFY", "LEASING", "OTROS"];
+  let holding = {}; let totalHolding = 0, totalVE = 0, totalGU = 0, totalCO = 0;
+  productos.forEach(p => {
+    let valVE = ve[p] || 0; let valGU = gu[p] || 0; let valCO = co[p] || 0;
+    holding[p] = valVE + valGU + valCO; totalVE += valVE; totalGU += valGU; totalCO += valCO; totalHolding += holding[p];
+  });
+  
+  const fmt = (num) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(num);
+  let filasTabla = "";
+  // ESTILO DE FILA: Padding reducido a 4px 8px para que sea "menos gorda"
+  const tdStyle = "padding: 4px 8px; border-bottom:1px solid #eee;";
+  
+  productos.forEach((p, idx) => { 
+    let bg = idx % 2 === 0 ? "#ffffff" : "#f9f9f9";
+    filasTabla += `<tr style="background-color:${bg};">
+      <td style="${tdStyle}">${p}</td>
+      <td style="${tdStyle} text-align:right; font-weight:bold; color:#240046;">${fmt(holding[p] || 0)}</td>
+      <td style="${tdStyle} text-align:right; color:#555;">${fmt(ve[p] || 0)}</td>
+      <td style="${tdStyle} text-align:right; color:#555;">${fmt(co[p] || 0)}</td>
+      <td style="${tdStyle} text-align:right; color:#555;">${fmt(gu[p] || 0)}</td>
+    </tr>`; 
+  });
+  let filaTotal = `<tr style="background-color:#E0E0E0; font-weight:bold;">
+    <td style="padding:8px;">TOTAL GLOBAL</td>
+    <td style="padding:8px; text-align:right; color:#240046;">${fmt(totalHolding)}</td>
+    <td style="padding:8px; text-align:right;">${fmt(totalVE)}</td>
+    <td style="padding:8px; text-align:right;">${fmt(totalCO)}</td>
+    <td style="padding:8px; text-align:right;">${fmt(totalGU)}</td>
+  </tr>`;
+
+  // 2. Extracción de Detalles
+  const sheetResumen = ss.getSheetByName("Resumen");
+  let htmlExtra = "";
+  if(sheetResumen) {
+    const datosRango = sheetResumen.getRange("A62:K105").getDisplayValues();
+    // Padding reducido también aquí (4px)
+    htmlExtra = `<h3 style="color:#240046; border-bottom:2px solid #240046; padding-bottom:5px; margin:0;">II. DETALLE OPERATIVO (TOP CLIENTES & TENDENCIAS)</h3>
+                 <table style="width:100%; border-collapse:collapse; font-size:11px; font-family:Arial, sans-serif;">`;
+    
+    datosRango.forEach(fila => {
+      if (fila.join("").trim() === "") return;
+      htmlExtra += "<tr>";
+      fila.forEach(celda => {
+        let style = "padding:3px 5px; border:1px solid #f0f0f0;"; // Celdas delgadas
+        if (celda.includes("VENEZUELA") || celda.includes("COLOMBIA") || celda.includes("GUATEMALA") || celda.includes("TOP 5") || celda.includes("EVOLUCIÓN") || celda === "TOTAL ANUAL" || celda === "MES") {
+           style += "background-color:#240046; color:white; font-weight:bold; text-align:center;";
+        } else if (celda.includes("CLIENTE") || celda.includes("VENTA USD") || celda.includes("DISTRIBUCIÓN") || celda.includes("TENDENCIA")) {
+           style += "background-color:#E0E0E0; font-weight:bold; text-align:center;";
+        }
+        if (celda.includes("$") || !isNaN(celda.replace(/,/g, ""))) style += "text-align:right;";
+        htmlExtra += `<td style="${style}">${celda}</td>`;
+      });
+      htmlExtra += "</tr>";
+    });
+    htmlExtra += "</table>";
+  }
+
+  // --- ENSAMBLAJE ---
+  let colorStatus = numErrores > 0 ? "#D32F2F" : "#388E3C";
+  let bgStatus = numErrores > 0 ? "#FFEBEE" : "#E8F5E9";
+  let textoStatus = numErrores > 0 ? `⚠️ SE DETECTARON ${numErrores} ALERTAS` : "✅ DATA PROCESADA CORRECTAMENTE";
+  const fechaHoy = new Date().toLocaleDateString();
+
+  const htmlBody = `
+    <div style="font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color:#333; max-width:900px; margin:0 auto; border:1px solid #ddd; background-color:#fff;">
+      
+      <div style="background-color:#240046; padding:25px; text-align:center;">
+        <h1 style="color:#fff; margin:0; letter-spacing:2px; font-size:22px;">VENTAS WAWA 2026</h1>
+        <p style="color:#ccc; margin:5px 0 0; font-size:11px;">REPORTE EJECUTIVO • ${fechaHoy}</p>
+      </div>
+
+      <div style="padding:25px;">
+        
+        <div style="background-color:${bgStatus}; color:${colorStatus}; padding:8px; text-align:center; font-weight:bold; border-radius:4px; font-size:12px; margin-bottom:20px;">
+          ${textoStatus}
+        </div>
+
+        <h3 style="color:#240046; border-bottom:2px solid #240046; padding-bottom:5px; margin:0 0 10px 0;">I. VISIÓN GENERAL (USD)</h3>
+        <table style="width:100%; border-collapse:collapse; font-size:12px; margin-bottom:0;">
+          <thead>
+            <tr style="background-color:#666; color:white;">
+              <th style="padding:8px; text-align:left;">UNIDAD DE NEGOCIO</th>
+              <th style="padding:8px; text-align:right;">HOLDING</th>
+              <th style="padding:8px; text-align:right;">VENEZUELA</th>
+              <th style="padding:8px; text-align:right;">COLOMBIA</th>
+              <th style="padding:8px; text-align:right;">GUATEMALA</th>
+            </tr>
+          </thead>
+          <tbody>${filasTabla}${filaTotal}</tbody>
+        </table>
+
+        <div style="height: 50px; border-bottom: 1px dashed #eee; margin-bottom: 30px;"></div>
+
+        ${htmlExtra}
+        
+      </div>
+
+      <div style="background-color:#f8f8f8; padding:15px; text-align:center; font-size:10px; color:#999; border-top:1px solid #eee;">
+        <p style="margin:0;">Generado automáticamente por el Sistema Maestro Wawa V120.</p>
+      </div>
+    </div>`;
+
+  let destinatario = CONFIG.EMAIL_DESTINO === "AUTO" ? Session.getActiveUser().getEmail() : CONFIG.EMAIL_DESTINO;
+  MailApp.sendEmail({ to: destinatario, subject: CONFIG.ASUNTO_EMAIL, htmlBody: htmlBody });
+}
+
+// ==========================================
+// 🌐 POP-UP
+// ==========================================
+function mostrarReporteResumenHTML(ve, gu, co, errores) {
+  const productos = ["OPEN NETW", "CLOSED NETW", "RENTAL", "LIVE", "AMPLIFY", "LEASING", "OTROS"];
+  let holding = {};
+  let totalHolding = 0, totalVE = 0, totalGU = 0, totalCO = 0;
+  productos.forEach(p => {
+    let valVE = ve[p] || 0; let valGU = gu[p] || 0; let valCO = co[p] || 0;
+    holding[p] = valVE + valGU + valCO;
+    totalVE += valVE; totalGU += valGU; totalCO += valCO; totalHolding += holding[p];
+  });
+  const fmt = (num) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0 }).format(num);
+  let filas = "";
+  productos.forEach(p => { filas += `<tr><td style="text-align:left; font-weight:600; color:#555;">${p}</td><td style="color:#240046; font-weight:bold;">${fmt(holding[p] || 0)}</td><td>${fmt(ve[p] || 0)}</td><td>${fmt(co[p] || 0)}</td><td>${fmt(gu[p] || 0)}</td></tr>`; });
+  let statusText = errores > 0 ? `⚠️ ${errores} alertas.` : "✅ Exitoso.";
+  let statusColor = errores > 0 ? "#FFEBEE" : "#E8F5E9";
+  let textColor = errores > 0 ? "#D32F2F" : "#2E7D32";
+  const htmlContent = `<html><head><link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700&display=swap" rel="stylesheet"><style>body{font-family:'Montserrat',sans-serif;padding:20px;background:#F4F6F8;}.card{background:white;border-radius:10px;box-shadow:0 4px 15px rgba(0,0,0,0.1);overflow:hidden;}.header{background:#240046;color:white;padding:20px;text-align:center;font-weight:700;font-size:18px;}table{width:100%;border-collapse:collapse;font-size:11px;}th{background:#F0F0F0;padding:10px;text-align:right;color:#666;}th:first-child{text-align:left;}td{padding:10px;border-bottom:1px solid #EEE;text-align:right;}.footer{padding:15px;display:flex;justify-content:space-between;align-items:center;background:white;}.status{background:${statusColor};color:${textColor};padding:5px 10px;border-radius:4px;font-weight:bold;font-size:11px;}button{background:#240046;color:white;border:none;padding:8px 15px;border-radius:4px;cursor:pointer;}</style></head><body><div class="card"><div class="header">RESUMEN VENTAS</div><table><thead><tr><th>SERVICIO</th><th>HOLDING</th><th>VE</th><th>CO</th><th>GU</th></tr></thead><tbody>${filas}<tr style="background:#F9F9F9;font-weight:bold;"><td>TOTAL</td><td>${fmt(totalHolding)}</td><td>${fmt(totalVE)}</td><td>${fmt(totalCO)}</td><td>${fmt(totalGU)}</td></tr></tbody></table><div class="footer"><span class="status">${statusText}</span><button onclick="google.script.host.close()">CERRAR</button></div></div></body></html>`;
+  const htmlOutput = HtmlService.createHtmlOutput(htmlContent).setWidth(700).setHeight(550);
+  SpreadsheetApp.getUi().showModalDialog(htmlOutput, ' ');
+}
+
+// ------------------------------------------
+// 🛠️ UTILS (COMPACTADO)
+// ------------------------------------------
+function aplicarEstiloVisual(sheet) {
+  if (!sheet || sheet.getLastRow() === 0) return;
+  const lastRow = sheet.getLastRow();
+  const lastCol = sheet.getLastColumn();
+  const range = sheet.getRange(1, 1, lastRow, lastCol);
+  sheet.setHiddenGridlines(true); 
+  range.setFontFamily("Montserrat").setFontSize(10).setVerticalAlignment("middle");
+  sheet.getRange(1, 1, 1, lastCol).setBackground(ESTILO.COLOR_HEADER).setFontColor("white").setFontWeight("bold").setHorizontalAlignment("center");
+  sheet.setRowHeight(1, 35); sheet.setFrozenRows(1);
+  if (lastCol > 2) sheet.setFrozenColumns(2);
+  if (lastRow > 1) {
+    const dataRange = sheet.getRange(2, 1, lastRow - 1, lastCol);
+    if (sheet.getBandings().length === 0) dataRange.applyRowBanding(SpreadsheetApp.BandingTheme.LIGHT_GREY);
+    range.setBorder(true, true, true, true, true, true, ESTILO.BORDE_COLOR, SpreadsheetApp.BorderStyle.SOLID);
+    if (sheet.getName().includes("Data") && lastCol >= 6) sheet.getRange(2, 6, lastRow - 1, lastCol - 5).setNumberFormat("#,##0.00;[Red]-#,##0.00");
+  }
+}
+function aplicarEstiloCabeceraSimple(s) { if (!s) return; s.getRange(1, 1, 1, s.getLastColumn()).setBackground("#666").setFontColor("white").setFontWeight("bold"); }
+function obtenerTasasPorPais(ss) {
+  let sheet = ss.getSheetByName("Tasas"), mapas = { VE: {}, CO: {}, GU: {} };
+  if (sheet) {
+    let data = sheet.getDataRange().getValues(), headers = data[0].map(h => String(h).toLowerCase());
+    let idxMes = headers.findIndex(h => h.includes("mes")), idxTasa = headers.findIndex(h => h.includes("tasa")), idxPais = headers.findIndex(h => h.includes("pais")), idxCiudad = headers.findIndex(h => h.includes("ciudad")); 
+    if (idxMes > -1 && idxTasa > -1) {
+       for(let i=1; i<data.length; i++) {
+          let mes = String(data[i][idxMes]).trim().toUpperCase(), tasa = parseMoney(data[i][idxTasa]), pais = (idxPais > -1) ? String(data[i][idxPais]).trim().toUpperCase() : "", ciudad = (idxCiudad > -1) ? String(data[i][idxCiudad]).trim().toUpperCase() : "";
+          if(mes && tasa > 0) { if (pais.includes("COLOMBIA") || ciudad === "BOGOTA" || ciudad === "MEDELLIN") mapas.CO[mes] = tasa; else if (pais.includes("GUATEMALA") || ciudad === "GUATEMALA") mapas.GU[mes] = tasa; else mapas.VE[mes] = tasa; }
+       }
+    }
+  }
+  return mapas;
+}
+function findColumn(headers, includes, excludes = []) { return headers.findIndex(h => { let match = includes.some(k => h.includes(k)); if (!match) return false; let isExcluded = excludes.some(ex => h.includes(ex)); return !isExcluded; }); }
+function reconstruirVenezuela(ss, configClientes, errores) {
+  const output = ss.getSheetByName("Data VE"), b2cOutput = ss.getSheetByName("B2C RED VE");
+  let inputs = [{ name: "Input_VE", isNC: false }, { name: "Input_VE_NC", isNC: true }], rawInputs = [];
+  inputs.forEach(info => { let s = ss.getSheetByName(info.name); if(s) rawInputs.push({ data: s.getDataRange().getValues(), isNC: info.isNC }); });
+  let mapaGlobal = new Map(), idsProcesados = new Set(), summary = {};
+  rawInputs.forEach(inputBatch => {
+      let data = inputBatch.data, hIdx = buscarHeader(data); if (hIdx === -1) return;
+      let headers = data[hIdx].map(h => String(h).toLowerCase().trim());
+      let col = { fact: findColumn(headers, ["factura", "número"]), fecha: findColumn(headers, ["fecha"]), cliente: findColumn(headers, ["cliente", "nombre"]), vend: findColumn(headers, ["vendedor"]), monto: findColumn(headers, ["importe sin", "sin impuestos"]), total_backup: findColumn(headers, ["total firmado", "total"], ["subtotal", "base", "impuestos", "bruto"]), subtotal_linea: findColumn(headers, ["subtotal", "base"]), cta: findColumn(headers, ["apuntes contables/cuenta"], ["conciliación"]), est: findColumn(headers, ["estado"], ["pago"]), ciu: findColumn(headers, ["ciudad"]), rif: findColumn(headers, ["rif"]) };
+      let idxMontoPadre = col.monto > -1 ? col.monto : col.total_backup;
+      for(let i=hIdx+1; i<data.length; i++) {
+          let row = data[i], factID = String(row[col.fact] || "").trim();
+          if (!factID || idsProcesados.has(factID)) continue; 
+          if (col.est > -1) { let estado = String(row[col.est]).toUpperCase(); if (estado.includes("CANCEL") || estado.includes("BORRADOR")) continue; }
+          let hijos = [], productosHijos = new Set(), sumaSubtotalHijos = 0;
+          for(let k=1; i+k < data.length; k++) { let childRow = data[i+k]; if (String(childRow[col.fact] || "").trim()) break; let childProd = detectProduct(childRow, col), childMonto = parseMoney(childRow[col.subtotal_linea]); if (childProd !== "OTROS" && childMonto !== 0) { hijos.push({ row: childRow, prod: childProd, monto: childMonto }); productosHijos.add(childProd); sumaSubtotalHijos += childMonto; } }
+          let esMixta = productosHijos.size > 1, montoPadre = parseMoney(row[idxMontoPadre]); if (inputBatch.isNC) montoPadre = -Math.abs(montoPadre);
+          if (esMixta) {
+              idsProcesados.add(factID); let factor = (sumaSubtotalHijos !== 0) ? (montoPadre / sumaSubtotalHijos) : 1;
+              hijos.forEach((hijo, idx) => { let montoAjustado = hijo.monto * factor; if (!summary[hijo.prod]) summary[hijo.prod] = 0; summary[hijo.prod] += montoAjustado; let currentData = { id: factID, fecha: row[col.fecha], cliente: row[col.cliente], vend: row[col.vend], adeudado: row[col.adeudado], est: row[col.est], ciu: row[col.ciu], rif: row[col.rif], prod: hijo.prod }; let idUnico = normalizarID(factID) + "_MIX_" + idx; procesarFilaUnificadaVE(idUnico, currentData, montoAjustado, false, mapaGlobal, configClientes); });
+          } else {
+              idsProcesados.add(factID); let prod = detectProduct(row, col); if (prod === "OTROS" && hijos.length > 0) prod = hijos[0].prod;
+              if (prod === "OTROS") { let clienteUpper = String(row[col.cliente]).toUpperCase(); for (let key in REGLAS.CLIENTES_PRODUCTO) { if (clienteUpper.includes(key)) { prod = REGLAS.CLIENTES_PRODUCTO[key]; break; } } }
+              if (prod === "OTROS") errores.push([new Date(), "Venezuela", factID, row[col.cliente], montoPadre, "Producto Desconocido", "Verificar Cta Contable"]);
+              if (!summary[prod]) summary[prod] = 0; summary[prod] += montoPadre;
+              let currentData = { id: factID, fecha: row[col.fecha], cliente: row[col.cliente], vend: row[col.vend], adeudado: row[col.adeudado], est: row[col.est], ciu: row[col.ciu], rif: row[col.rif], prod: prod }; let idUnico = normalizarID(factID) + "_IN_" + i; procesarFilaUnificadaVE(idUnico, currentData, montoPadre, false, mapaGlobal, configClientes); 
+          }
+      }
+  });
+  let finalDataVE = [], finalB2C = []; mapaGlobal.forEach(item => { if (item.destino === "B2C") finalB2C.push(item.row); else finalDataVE.push(item.row); });
+  pegarCompacto(output, finalDataVE); pegarCompacto(b2cOutput, finalB2C); return { total: mapaGlobal.size, summary: summary };
+}
+function reconstruirGuatemala(ss, configClientes, mapaTasas, errores) {
+  const output = ss.getSheetByName("Data GU"), input = ss.getSheetByName("Input_GU"); let mapa = new Map(), summary = {}; 
+  if (input) {
+      let data = input.getDataRange().getValues(), hIdx = buscarHeader(data);
+      if (hIdx > -1) {
+          let headers = data[hIdx].map(h => String(h).toLowerCase()), col = { id: findColumn(headers, ["número", "factura"]), cli: findColumn(headers, ["cliente", "nombre", "socio"]), fe: findColumn(headers, ["fecha"]), tot: findColumn(headers, ["total firmado", "total"], ["subtotal"]), imp: findColumn(headers, ["impuesto"]), base: findColumn(headers, ["importe sin", "subtotal"]), adeu: findColumn(headers, ["adeudado"]), est: findColumn(headers, ["estado"], ["pago"]), cta: findColumn(headers, ["cuenta"]), rif: findColumn(headers, ["nit"]) }, idxMonto = col.tot > -1 ? col.tot : col.base; 
+          for(let i=hIdx+1; i<data.length; i++) {
+              let row = data[i], id = String(row[col.id] || "").trim(); if(!id) continue; 
+              let key = normalizarID(id) + "_IN_" + i, prodRaw = (col.cta > -1) ? String(row[col.cta]) : escanearFilaCompleta(row), prod = mapearProducto(prodRaw);
+              if (prod === "OTROS") { for(let k=1; k<=3; k++) { if (i+k < data.length && !String(data[i+k][col.id] || "").trim()) { let nextProd = mapearProducto(String(data[i+k][col.cta])); if (nextProd !== "OTROS") { prod = nextProd; break; } } else break; } }
+              if (prod === "OTROS") errores.push([new Date(), "Guatemala", id, row[col.cli], parseMoney(row[idxMonto]), "Prod Desconocido", prodRaw]);
+              let tipo = determinarTipoCliente(row[col.cli], row[col.rif], "Guatemala", configClientes, prod), amountTotal = parseMoney(row[col.tot]), amountBase = parseMoney(row[col.base]), fechaF = formatearFecha(row[col.fe]), mes = REGLAS.MESES[fechaF.getMonth()] || "DICIEMBRE", tasa = (mapaTasas && mapaTasas[mes]) ? mapaTasas[mes] : 0;
+              if (tasa === 0) errores.push([new Date(), "Guatemala", id, row[col.cli], amountBase, "Tasa Faltante", mes]);
+              let totalUSD = (tasa > 0) ? (amountBase / tasa) : 0; if (!summary[prod]) summary[prod] = 0; summary[prod] += totalUSD;
+              let fila = [id, row[col.cli], fechaF, "", "", amountBase, parseMoney(row[col.imp]), amountTotal, parseMoney(row[col.adeu]), row[col.est], row[col.est], "", "", tasa, totalUSD, prodRaw, mes, "Guatemala", tipo, prod, "", "NUEVO"]; mapa.set(key, fila);
+          }
+      }
+  }
+  let finalData = Array.from(mapa.values()); pegarCompacto(output, finalData); return { total: finalData.length, summary: summary };
+}
+function reconstruirColombia(ss, configClientes, mapaTasas, errores) {
+  const output = ss.getSheetByName("Data CO"), input = ss.getSheetByName("Input_CO"); let mapa = new Map(), summary = {};
+  if (input) {
+      let data = input.getDataRange().getValues(), hIdx = buscarHeader(data);
+      if (hIdx > -1) {
+          let headers = data[hIdx].map(h => String(h).toLowerCase()), col = { id: findColumn(headers, ["número", "factura", "consecutivo"]), cli: findColumn(headers, ["cliente"]), prod: findColumn(headers, ["nombre producto", "descripción"], ["código"]), tot: findColumn(headers, ["total", "neto"]), fe: findColumn(headers, ["fecha"]), nit: findColumn(headers, ["nit", "identificación"]) };
+          for(let i=hIdx+1; i<data.length; i++) {
+              let row = data[i]; if(!row[col.cli]) continue;
+              let total = parseMoney(row[col.tot] > -1 ? row[col.tot] : row[col.tot+1]), factID = (col.id > -1 && row[col.id]) ? String(row[col.id]) : `SIIGO-${row[col.nit]}-${i}`, key = normalizarID(factID) + "_IN_" + i;
+              let prodRaw = (col.prod > -1) ? String(row[col.prod]).toUpperCase() : escanearFilaCompleta(row), prod = mapearProducto(prodRaw);
+              if (prod === "OTROS") errores.push([new Date(), "Colombia", factID, row[col.cli], total, "Prod Desconocido", prodRaw]);
+              let tipo = determinarTipoCliente(row[col.cli], row[col.nit], "Colombia", configClientes, prod), fechaF = formatearFecha(row[col.fe]), mes = REGLAS.MESES[fechaF.getMonth()] || "DICIEMBRE", trm = (mapaTasas && mapaTasas[mes]) ? mapaTasas[mes] : 0; 
+              if (trm === 0) errores.push([new Date(), "Colombia", factID, row[col.cli], total, "TRM Faltante", mes]);
+              let totalUSD = (trm > 0) ? (total / trm) : 0; if (!summary[prod]) summary[prod] = 0; summary[prod] += totalUSD;
+              let fila = [row[col.cli], factID, fechaF, "", "", total, 0, "Pagado", "", totalUSD, prodRaw, mes, "Colombia", tipo, "NUEVO", "", prod, "", trm]; mapa.set(key, fila);
+          }
+      }
+  }
+  let finalData = Array.from(mapa.values()); pegarCompacto(output, finalData); return { total: finalData.length, summary: summary };
+}
+function detectProduct(row, col) { let prod = "OTROS", txtCuenta = (col.cta > -1) ? String(row[col.cta]).toUpperCase() : ""; if (txtCuenta.startsWith("112.")) return "OTROS"; for (let k in REGLAS.PRODUCTOS) { if (txtCuenta.includes(k)) return REGLAS.PRODUCTOS[k]; } return prod; }
+function procesarFilaUnificadaVE(key, data, amount, isNC, mapa, config) {
+   let fechaF = formatearFecha(data.fecha), mes = REGLAS.MESES[fechaF.getMonth()] || "DICIEMBRE"; if (isNC) amount = -Math.abs(amount); let usd = amount, tipo = determinarTipoClienteVenezuela(data.cliente, data.rif, config, data.prod, Math.abs(usd));
+   if (tipo === "B2C" && data.prod === "OPEN NETW") mapa.set(key, { destino: "B2C", row: [data.id, fechaF, data.cliente, data.rif, usd, mes, data.vend, data.est] }); else mapa.set(key, { destino: "DATA", row: [data.cliente, data.id, fechaF, data.vend, data.vend, "", data.adeudado, data.est, "", usd, data.prod, mes, "Venezuela", tipo, "NUEVO", data.ciu || "CARACAS", data.prod] });
+}
+function determinarTipoClienteVenezuela(cliente, rif, mapaConfig, producto, montoUSD) { if (producto === "LEASING") return "B2B"; let nombreUpper = String(cliente || "").trim().toUpperCase(); if (mapaConfig && mapaConfig[nombreUpper]) return mapaConfig[nombreUpper]; if (esEmpresaPorNombre(nombreUpper)) return "B2B"; let rifUpper = String(rif || "").trim().toUpperCase(), primeraLetra = rifUpper.charAt(0); if (primeraLetra === 'V' || primeraLetra === 'E') return "B2C"; if (producto === "OPEN NETW") return "B2C"; if (primeraLetra === 'J' || primeraLetra === 'G') return "B2B"; return "B2C"; }
+function esEmpresaPorNombre(nombre) { let nombreUpper = String(nombre).trim().toUpperCase(); if (REGLAS.CLIENTES_VIP_B2B.some(vip => nombreUpper.includes(vip))) return true; let esLegal = REGLAS.LEGAL_SUFFIXES.some(s => { let pattern = s.replace(/\./g, "\\.?"); let regex = new RegExp("\\b" + pattern + "\\b", "i"); return regex.test(nombreUpper); }); if (esLegal) return true; return REGLAS.B2B_KEYWORDS.some(k => { let regex = new RegExp("\\b" + k + "\\b", "i"); return regex.test(nombreUpper); }); }
+function determinarTipoCliente(cliente, rif, pais, mapaConfig, producto) { if (producto === "LEASING") return "B2B"; let nombreUpper = String(cliente || "").trim().toUpperCase(); if (mapaConfig && mapaConfig[nombreUpper]) return mapaConfig[nombreUpper]; if (esEmpresaPorNombre(nombreUpper)) return "B2B"; if (pais === "Guatemala" && nombreUpper.length > 4 && /[A-Z]/.test(cliente) && cliente.split(" ").length > 1) return "B2B"; return "B2C"; }
+function mapearProducto(txt) { for (let k in REGLAS.PRODUCTOS) { if (txt.includes(k)) return REGLAS.PRODUCTOS[k]; } return "OTROS"; }
+function escanearFilaCompleta(row) { return row.join(" ").toUpperCase(); }
+function limpiarHoja(ss, nombre) { let sheet = ss.getSheetByName(nombre); if(sheet && sheet.getLastRow() > 1) { sheet.getRange(2, 1, sheet.getMaxRows(), sheet.getLastColumn()).clearContent(); } }
+function pegarCompacto(sheet, data) { if (!sheet || data.length === 0) return; sheet.getRange(2, 1, data.length, data[0].length).setValues(data); }
+function normalizarID(id) { if (!id) return ""; let s = String(id).trim().toUpperCase(); if (s.endsWith(".0")) s = s.slice(0, -2); return s; }
+function formatearFecha(val) { if (val instanceof Date) return val; if (typeof val === 'string') return new Date(val); return new Date(); }
+function buscarHeader(data) { for (let i = 0; i < Math.min(data.length, 20); i++) { const s = data[i].join("||").toLowerCase(); if ((s.includes("factura") || s.includes("número") || s.includes("cliente") || s.includes("identificación")) && (s.includes("total") || s.includes("firmado") || s.includes("bruto"))) return i; } return -1; }
+function obtenerConfigClientes(ss) { let sheet = ss.getSheetByName("CONFIG_CLIENTES"), mapa = {}; if (sheet) { let data = sheet.getDataRange().getValues(); for (let i = 1; i < data.length; i++) if (data[i][0]) mapa[String(data[i][0]).trim().toUpperCase()] = String(data[i][1]).trim().toUpperCase(); } return mapa; }
+function parseMoney(v) { if (typeof v === 'number') return v; if (!v) return 0; let s = String(v).trim(), lastDot = s.lastIndexOf('.'), lastComma = s.lastIndexOf(','); if (lastComma > lastDot) s = s.replace(/\./g, "").replace(",", "."); else if (lastDot > lastComma) s = s.replace(/,/g, ""); return parseFloat(s) || 0; }
+function configurarEstructura(ss) { ["Input_VE", "Input_VE_NC", "Input_CO", "Input_GU"].forEach(n => { if (!ss.getSheetByName(n)) ss.insertSheet(n).setTabColor("#ff0000"); }); const createData = (name, headers) => { let s = ss.getSheetByName(name); if (!s) s = ss.insertSheet(name); s.setTabColor("#34a853"); s.getRange(1, 1, 1, headers.length).setValues([headers]); }; createData("Data VE", HEADERS_VE); createData("Data GU", HEADERS_GU); createData("Data CO", HEADERS_CO); if (!ss.getSheetByName("CONFIG_CLIENTES")) { let s = ss.insertSheet("CONFIG_CLIENTES"); s.setTabColor("#9900ff"); s.appendRow(["CLIENTE", "TIPO"]); } if (!ss.getSheetByName("B2C RED VE")) ss.insertSheet("B2C RED VE").setTabColor("#ea4335"); if (!ss.getSheetByName("ERRORES")) ss.insertSheet("ERRORES").setTabColor("#ea4335").appendRow(HEADERS_ERR); if (!ss.getSheetByName("Tasas")) ss.insertSheet("Tasas").appendRow(["Fecha", "Pais", "Tasa"]); }
